@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { RxDatabase } from "rxdb";
 import { initDB } from "../db/database";
 import { Note } from "../types";
-
+import { fetchNotes } from "../utils/api";
 export const useNotes = () => {
   const [notes, setNotes] = useState<Note[]>([]);
-  const [db, setDb] = useState<RxDatabase | null>(null); 
+  const [db, setDb] = useState<RxDatabase | null>(null);
 
   useEffect(() => {
     const loadNotes = async () => {
@@ -15,6 +15,10 @@ export const useNotes = () => {
       const storedNotes = await database.notes.find().exec();
       if (storedNotes.length > 0) {
         setNotes(storedNotes.map((n) => n.toJSON() as Note));
+      } else {
+        const apiNotes: Note[] = await fetchNotes();
+        await database.notes.bulkInsert(apiNotes.slice(0, 10)); 
+        setNotes(apiNotes.slice(0, 10));
       }
     };
 
